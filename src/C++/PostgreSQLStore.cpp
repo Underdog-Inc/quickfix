@@ -81,7 +81,7 @@ PostgreSQLStore::~PostgreSQLStore() {
 void PostgreSQLStore::populateCache() {
   std::stringstream queryString;
 
-  queryString << "SELECT creation_time, incoming_seqnum, outgoing_seqnum FROM sessions WHERE "
+  queryString << "SELECT creation_time, incoming_seqnum, outgoing_seqnum FROM quickfix.sessions WHERE "
               << "beginstring=" << "'" << m_sessionID.getBeginString().getValue() << "' and "
               << "sendercompid=" << "'" << m_sessionID.getSenderCompID().getValue() << "' and "
               << "targetcompid=" << "'" << m_sessionID.getTargetCompID().getValue() << "' and "
@@ -112,7 +112,7 @@ void PostgreSQLStore::populateCache() {
     time.getHMS(hour, minute, second, millis);
     STRING_SPRINTF(sqlTime, "%d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second);
     std::stringstream queryString2;
-    queryString2 << "INSERT INTO sessions (beginstring, sendercompid, targetcompid, session_qualifier,"
+    queryString2 << "INSERT INTO quickfix.sessions (beginstring, sendercompid, targetcompid, session_qualifier,"
                  << "creation_time, incoming_seqnum, outgoing_seqnum) VALUES("
                  << "'" << m_sessionID.getBeginString().getValue() << "',"
                  << "'" << m_sessionID.getSenderCompID().getValue() << "',"
@@ -180,7 +180,7 @@ bool PostgreSQLStore::set(SEQNUM msgSeqNum, const std::string &msg) EXCEPT(IOExc
   PQescapeString(msgCopy, msg.c_str(), msg.size());
 
   std::stringstream queryString;
-  queryString << "INSERT INTO messages "
+  queryString << "INSERT INTO quickfix.messages "
               << "(beginstring, sendercompid, targetcompid, session_qualifier, msgseqnum, message) "
               << "VALUES ("
               << "'" << m_sessionID.getBeginString().getValue() << "',"
@@ -194,7 +194,7 @@ bool PostgreSQLStore::set(SEQNUM msgSeqNum, const std::string &msg) EXCEPT(IOExc
   PostgreSQLQuery query(queryString.str());
   if (!m_pConnection->execute(query)) {
     std::stringstream queryString2;
-    queryString2 << "UPDATE messages SET message='" << msg << "' WHERE "
+    queryString2 << "UPDATE quickfix.messages SET message='" << msg << "' WHERE "
                  << "beginstring=" << "'" << m_sessionID.getBeginString().getValue() << "' and "
                  << "sendercompid=" << "'" << m_sessionID.getSenderCompID().getValue() << "' and "
                  << "targetcompid=" << "'" << m_sessionID.getTargetCompID().getValue() << "' and "
@@ -212,7 +212,7 @@ bool PostgreSQLStore::set(SEQNUM msgSeqNum, const std::string &msg) EXCEPT(IOExc
 void PostgreSQLStore::get(SEQNUM begin, SEQNUM end, std::vector<std::string> &result) const EXCEPT(IOException) {
   result.clear();
   std::stringstream queryString;
-  queryString << "SELECT message FROM messages WHERE "
+  queryString << "SELECT message FROM quickfix.messages WHERE "
               << "beginstring=" << "'" << m_sessionID.getBeginString().getValue() << "' and "
               << "sendercompid=" << "'" << m_sessionID.getSenderCompID().getValue() << "' and "
               << "targetcompid=" << "'" << m_sessionID.getTargetCompID().getValue() << "' and "
@@ -237,7 +237,7 @@ SEQNUM PostgreSQLStore::getNextTargetMsgSeqNum() const EXCEPT(IOException) { ret
 
 void PostgreSQLStore::setNextSenderMsgSeqNum(SEQNUM value) EXCEPT(IOException) {
   std::stringstream queryString;
-  queryString << "UPDATE sessions SET outgoing_seqnum=" << value << " WHERE "
+  queryString << "UPDATE quickfix.sessions SET outgoing_seqnum=" << value << " WHERE "
               << "beginstring=" << "'" << m_sessionID.getBeginString().getValue() << "' and "
               << "sendercompid=" << "'" << m_sessionID.getSenderCompID().getValue() << "' and "
               << "targetcompid=" << "'" << m_sessionID.getTargetCompID().getValue() << "' and "
@@ -253,7 +253,7 @@ void PostgreSQLStore::setNextSenderMsgSeqNum(SEQNUM value) EXCEPT(IOException) {
 
 void PostgreSQLStore::setNextTargetMsgSeqNum(SEQNUM value) EXCEPT(IOException) {
   std::stringstream queryString;
-  queryString << "UPDATE sessions SET incoming_seqnum=" << value << " WHERE "
+  queryString << "UPDATE quickfix.sessions SET incoming_seqnum=" << value << " WHERE "
               << "beginstring=" << "'" << m_sessionID.getBeginString().getValue() << "' and "
               << "sendercompid=" << "'" << m_sessionID.getSenderCompID().getValue() << "' and "
               << "targetcompid=" << "'" << m_sessionID.getTargetCompID().getValue() << "' and "
@@ -281,7 +281,7 @@ UtcTimeStamp PostgreSQLStore::getCreationTime() const EXCEPT(IOException) { retu
 
 void PostgreSQLStore::reset(const UtcTimeStamp &now) EXCEPT(IOException) {
   std::stringstream queryString;
-  queryString << "DELETE FROM messages WHERE "
+  queryString << "DELETE FROM quickfix.messages WHERE "
               << "beginstring=" << "'" << m_sessionID.getBeginString().getValue() << "' and "
               << "sendercompid=" << "'" << m_sessionID.getSenderCompID().getValue() << "' and "
               << "targetcompid=" << "'" << m_sessionID.getTargetCompID().getValue() << "' and "
@@ -303,7 +303,7 @@ void PostgreSQLStore::reset(const UtcTimeStamp &now) EXCEPT(IOException) {
   STRING_SPRINTF(sqlTime, "%d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second);
 
   std::stringstream queryString2;
-  queryString2 << "UPDATE sessions SET creation_time='" << sqlTime << "', "
+  queryString2 << "UPDATE quickfix.sessions SET creation_time='" << sqlTime << "', "
                << "incoming_seqnum=" << m_cache.getNextTargetMsgSeqNum() << ", "
                << "outgoing_seqnum=" << m_cache.getNextSenderMsgSeqNum() << " WHERE "
                << "beginstring=" << "'" << m_sessionID.getBeginString().getValue() << "' and "
